@@ -100,11 +100,11 @@ def main():
 
     # === Download ===
     downloaded_folder = download_selected_files(
-        torrent_input, download_dir, selected)
+        torrent_input=torrent_input, save_path=download_dir, selected_indices=selected)
 
     # === Upload ===
     print("\nUploading downloaded files to Google Drive...")
-    upload_folder_to_drive(drive, downloaded_folder)
+    upload_folder_to_drive(drive=drive, local_folder=downloaded_folder, parent_folder_id="1Un8G9XSS_yUSv-396DPPQi-Y7NV0O2gJ")
     print("✅ All selected files uploaded successfully.")
 
 
