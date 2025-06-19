@@ -1,6 +1,7 @@
 import os
 import time
 import libtorrent as lt
+import subprocess
 
 
 def download_torrent_files(torrent_input: str, save_path: str) -> str:
@@ -77,6 +78,16 @@ def main():
     downloaded_folder = download_torrent_files(
         torrent_input=torrent_input, save_path=download_dir)
     print(f"\nAll files downloaded to: {downloaded_folder}")
+
+    # === Rclone Upload ===
+    folder_name = os.path.basename(downloaded_folder)
+    remote_path = f"gdrive:Torrent Uploads/{folder_name}"
+    print(f"\nUploading to Google Drive using rclone...")
+    rclone_cmd = [
+        "rclone", "copy", downloaded_folder, remote_path, "--progress"
+    ]
+    subprocess.run(rclone_cmd)
+    print("✅ Upload to Google Drive complete.")
 
 
 if __name__ == "__main__":
