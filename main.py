@@ -15,24 +15,11 @@ def authenticate_gdrive(service_account_file: str) -> GoogleDrive:
     return GoogleDrive(gauth)
 
 
-def list_torrent_files(torrent_info: lt.torrent_info):
-    print("\nFiles in torrent:")
-    for i, f in enumerate(torrent_info.files()):
-        print(f"{i}: {f.path} ({f.size / (1024 ** 2):.2f} MB)")
-
-
-def select_file_indices(num_files: int) -> list[int]:
-    selected = input(
-        "\nEnter comma-separated file numbers to download (e.g., 0,2,3): ").strip()
-    return [int(i) for i in selected.split(',') if i.strip().isdigit() and 0 <= int(i) < num_files]
-
-
-def download_selected_files(torrent_input: str, save_path: str, selected_indices: list[int]) -> str:
+def download_torrent_files(torrent_input: str, save_path: str) -> str:
     ses = lt.session()
     ses.listen_on(6881, 6891)
 
     if torrent_input.startswith("magnet:"):
-        print("⚠️ File selection not supported for magnet links before metadata is downloaded.")
         params = {"save_path": save_path}
         handle = lt.add_magnet_uri(ses, torrent_input, params)
 
@@ -46,13 +33,7 @@ def download_selected_files(torrent_input: str, save_path: str, selected_indices
         params = {"ti": torrent_info, "save_path": save_path}
         handle = ses.add_torrent(params)
 
-    # Set file priorities
-    file_priorities = [0] * torrent_info.num_files()
-    for idx in selected_indices:
-        file_priorities[idx] = 1
-    handle.prioritize_files(file_priorities)
-
-    print("\nDownloading selected files...")
+    print("\nDownloading all files...")
     while not handle.is_seed():
         s = handle.status()
         print(
@@ -89,23 +70,18 @@ def main():
     drive = authenticate_gdrive(service_account_path)
 
     # === Torrent Input ===
-    torrent_input = input("Enter magnet link or path to .torrent file: ").strip()
-
-    if not torrent_input.startswith("magnet:"):
-        torrent_info = lt.torrent_info(torrent_input)
-        list_torrent_files(torrent_info)
-        selected = select_file_indices(torrent_info.num_files())
-    else:
-        selected = []
+    torrent_input = input(
+        "Enter magnet link or path to .torrent file: ").strip()
 
     # === Download ===
-    downloaded_folder = download_selected_files(
-        torrent_input=torrent_input, save_path=download_dir, selected_indices=selected)
+    downloaded_folder = download_torrent_files(
+        torrent_input=torrent_input, save_path=download_dir)
 
     # === Upload ===
     print("\nUploading downloaded files to Google Drive...")
-    upload_folder_to_drive(drive=drive, local_folder=downloaded_folder, parent_folder_id="1Un8G9XSS_yUSv-396DPPQi-Y7NV0O2gJ")
-    print("✅ All selected files uploaded successfully.")
+    upload_folder_to_drive(drive=drive, local_folder=downloaded_folder,
+                           parent_folder_id="1Un8G9XSS_yUSv-396DPPQi-Y7NV0O2gJ")
+    print("✅ All files uploaded successfully.")
 
 
 if __name__ == "__main__":
