@@ -1,23 +1,10 @@
 import os
 import time
 import libtorrent as lt
-from pydrive2.auth import GoogleAuth, ServiceAccountCredentials
-from pydrive2.drive import GoogleDrive
-
-
-def authenticate_gdrive(service_account_file: str) -> GoogleDrive:
-    gauth = GoogleAuth()
-    gauth.auth_method = 'service'
-    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        service_account_file,
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
-    return GoogleDrive(gauth)
 
 
 def download_torrent_files(torrent_input: str, save_path: str) -> str:
     ses = lt.session()
-
     # Configure session for better performance
     settings = {
         'enable_dht': True,
@@ -33,20 +20,9 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
         'min_reconnect_time': 2,
         'send_buffer_watermark': 500000,
         'send_buffer_low_watermark': 100000,
-        'connection_speed': 200,
-        'max_out_request_queue': 500,
-        'max_allowed_in_request_queue': 200,
-        'max_failcount': 3,
-        'min_reconnect_time': 2,
-        'send_buffer_watermark': 500000,
-        'send_buffer_low_watermark': 100000,
     }
     ses.apply_settings(settings)
-
-    # Listen on multiple ports for better connectivity
     ses.listen_on(6881, 6891)
-
-    # Add DHT routers for better peer discovery
     dht_routers = [
         ('router.bittorrent.com', 6881),
         ('router.utorrent.com', 6881),
@@ -88,28 +64,10 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
     return os.path.join(save_path, handle.name())
 
 
-def upload_folder_to_drive(drive: GoogleDrive, local_folder: str, parent_folder_id: str = None):
-    for root, _, files in os.walk(local_folder):
-        for file in files:
-            file_path = os.path.join(root, file)
-            f = drive.CreateFile({
-                'title': file,
-                'parents': [{'id': parent_folder_id}] if parent_folder_id else []
-            })
-            f.SetContentFile(file_path)
-            f.Upload()
-            print(f"☁️ Uploaded: {file}")
-
-
 def main():
     # === Setup ===
-    service_account_path = "service_account.json"
     download_dir = "./downloads"
     os.makedirs(download_dir, exist_ok=True)
-
-    # === Auth ===
-    print("🔐 Authenticating with Google Drive...")
-    drive = authenticate_gdrive(service_account_path)
 
     # === Torrent Input ===
     torrent_input = input(
@@ -118,12 +76,7 @@ def main():
     # === Download ===
     downloaded_folder = download_torrent_files(
         torrent_input=torrent_input, save_path=download_dir)
-
-    # === Upload ===
-    print("\nUploading downloaded files to Google Drive...")
-    upload_folder_to_drive(drive=drive, local_folder=downloaded_folder,
-                           parent_folder_id="1Un8G9XSS_yUSv-396DPPQi-Y7NV0O2gJ")
-    print("✅ All files uploaded successfully.")
+    print(f"\nAll files downloaded to: {downloaded_folder}")
 
 
 if __name__ == "__main__":
