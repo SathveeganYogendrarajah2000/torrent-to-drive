@@ -65,16 +65,36 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
     return os.path.join(save_path, handle.name())
 
 
-def remove_optional_files(folder: str):
+def remove_unwanted_files(folder: str):
+    # List of all languages from the example
+    languages = [
+        "brazilian", "chinese", "english", "french", "german", "italian",
+        "japanese", "korean", "polish", "russian", "spanish"
+    ]
     for root, _, files in os.walk(folder):
         for file in files:
-            if "optional" in file.lower():
+            file_lower = file.lower()
+            # Remove files containing 'optional'
+            if "optional" in file_lower:
                 file_path = os.path.join(root, file)
                 try:
                     os.remove(file_path)
                     print(f"🗑️ Removed: {file_path}")
                 except Exception as e:
                     print(f"⚠️ Could not remove {file_path}: {e}")
+                continue
+            # Remove selective-language files except english
+            for lang in languages:
+                if lang == "english":
+                    continue
+                if f"selective-{lang}" in file_lower:
+                    file_path = os.path.join(root, file)
+                    try:
+                        os.remove(file_path)
+                        print(f"🗑️ Removed: {file_path}")
+                    except Exception as e:
+                        print(f"⚠️ Could not remove {file_path}: {e}")
+                    break
 
 
 def main():
@@ -93,7 +113,7 @@ def main():
 
     # === Remove 'optional' files ===
     print("\nRemoving files containing 'optional' in their name...")
-    remove_optional_files(downloaded_folder)
+    remove_unwanted_files(downloaded_folder)
 
     # === Rclone Upload ===
     folder_name = os.path.basename(downloaded_folder)
