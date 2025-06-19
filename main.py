@@ -65,6 +65,18 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
     return os.path.join(save_path, handle.name())
 
 
+def remove_optional_files(folder: str):
+    for root, _, files in os.walk(folder):
+        for file in files:
+            if "optional" in file.lower():
+                file_path = os.path.join(root, file)
+                try:
+                    os.remove(file_path)
+                    print(f"🗑️ Removed: {file_path}")
+                except Exception as e:
+                    print(f"⚠️ Could not remove {file_path}: {e}")
+
+
 def main():
     # === Setup ===
     download_dir = "./downloads"
@@ -78,6 +90,10 @@ def main():
     downloaded_folder = download_torrent_files(
         torrent_input=torrent_input, save_path=download_dir)
     print(f"\nAll files downloaded to: {downloaded_folder}")
+
+    # === Remove 'optional' files ===
+    print("\nRemoving files containing 'optional' in their name...")
+    remove_optional_files(downloaded_folder)
 
     # === Rclone Upload ===
     folder_name = os.path.basename(downloaded_folder)
