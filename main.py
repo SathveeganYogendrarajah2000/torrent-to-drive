@@ -66,10 +66,10 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
 
 
 def remove_unwanted_files(folder: str):
-    # List of all languages from the example
+    # List of all languages from the examples
     languages = [
         "brazilian", "chinese", "english", "french", "german", "italian",
-        "japanese", "korean", "polish", "russian", "spanish"
+        "japanese", "korean", "polish", "russian", "spanish", "portuguese-brazil"
     ]
     for root, _, files in os.walk(folder):
         for file in files:
@@ -88,6 +88,19 @@ def remove_unwanted_files(folder: str):
                 if lang == "english":
                     continue
                 if f"selective-{lang}" in file_lower:
+                    file_path = os.path.join(root, file)
+                    try:
+                        os.remove(file_path)
+                        print(f"🗑️ Removed: {file_path}")
+                    except Exception as e:
+                        print(f"⚠️ Could not remove {file_path}: {e}")
+                    break
+            # Remove <language>.doi files except english.doi
+            for lang in languages:
+                if lang == "english":
+                    continue
+                # Match e.g. 'french.doi', 'portuguese-brazil.doi', etc.
+                if file_lower == f"{lang}.doi":
                     file_path = os.path.join(root, file)
                     try:
                         os.remove(file_path)
