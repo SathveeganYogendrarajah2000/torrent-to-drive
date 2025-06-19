@@ -44,3 +44,27 @@ rclone copy "./downloads/<folder>" "gdrive:Torrent Uploads/<folder>" --progress
 - Make sure rclone is in your system PATH so the script can call it.
 - The script shows download and upload progress in the terminal.
 - For best torrent performance, ensure your firewall allows ports 6881-6891.
+
+## Notes to configure rclone
+1. rclone config
+2. remote name: gdrive
+3. Storage: drive or 22
+4. client_id: 
+5. client_secret: 
+6. scope:
+7. Service account file:
+8. Edit advanced config:
+9. Use web browser: no
+10. config token: <paste the token here>
+```bash
+Option config_token.
+For this to work, you will need rclone available on a machine that has
+a web browser available.
+For more help and alternate methods see: https://rclone.org/remote_setup/
+Execute the following on the machine with the web browser (same rclone
+version recommended):
+        rclone authorize "drive"
+Then paste the result.
+Enter a value.
+config_token>
+```
