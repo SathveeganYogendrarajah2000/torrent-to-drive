@@ -17,7 +17,43 @@ def authenticate_gdrive(service_account_file: str) -> GoogleDrive:
 
 def download_torrent_files(torrent_input: str, save_path: str) -> str:
     ses = lt.session()
+
+    # Configure session for better performance
+    settings = {
+        'enable_dht': True,
+        'enable_lsd': True,
+        'enable_upnp': True,
+        'enable_natpmp': True,
+        'announce_to_all_trackers': True,
+        'announce_to_all_tiers': True,
+        'connection_speed': 200,
+        'max_out_request_queue': 500,
+        'max_allowed_in_request_queue': 200,
+        'max_failcount': 3,
+        'min_reconnect_time': 2,
+        'send_buffer_watermark': 500000,
+        'send_buffer_low_watermark': 100000,
+        'connection_speed': 200,
+        'max_out_request_queue': 500,
+        'max_allowed_in_request_queue': 200,
+        'max_failcount': 3,
+        'min_reconnect_time': 2,
+        'send_buffer_watermark': 500000,
+        'send_buffer_low_watermark': 100000,
+    }
+    ses.apply_settings(settings)
+
+    # Listen on multiple ports for better connectivity
     ses.listen_on(6881, 6891)
+
+    # Add DHT routers for better peer discovery
+    dht_routers = [
+        ('router.bittorrent.com', 6881),
+        ('router.utorrent.com', 6881),
+        ('dht.transmissionbt.com', 6881),
+    ]
+    for router, port in dht_routers:
+        ses.add_dht_router(router, port)
 
     if torrent_input.startswith("magnet:"):
         params = {"save_path": save_path}
@@ -26,8 +62,11 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
         print("Downloading metadata...")
         while not handle.has_metadata():
             time.sleep(1)
+            s = handle.status()
+            print(f"\rWaiting for metadata... State: {s.state}", end="")
 
         torrent_info = handle.get_torrent_info()
+        print(f"\n✅ Metadata received: {torrent_info.name()}")
     else:
         torrent_info = lt.torrent_info(torrent_input)
         params = {"ti": torrent_info, "save_path": save_path}
@@ -36,9 +75,12 @@ def download_torrent_files(torrent_input: str, save_path: str) -> str:
     print("\nDownloading all files...")
     while not handle.is_seed():
         s = handle.status()
+        peers = s.num_peers
+        seeds = s.num_seeds
         print(
             f"\r{s.name} | {s.progress * 100:.2f}% | "
-            f"{s.download_rate / 1000:.2f} kB/s | {s.state}", end=""
+            f"{s.download_rate / 1000:.2f} kB/s | "
+            f"Peers: {peers} | Seeds: {seeds} | State: {s.state}", end=""
         )
         time.sleep(1)
 
